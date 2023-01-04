@@ -9,22 +9,22 @@
 
 using namespace ge::gl;
 
-Gluint createShader(Glenum type, std::string const&src)
+GLuint createShader(GLenum type, std::string const&src)
 {
-	Gluint id = glCreateShader(type);
+	GLuint id = glCreateShader(type);
 	char const* const srcs[] = {
 		src.data()
 	};
-	glShaderSource(id,1,srcs,mullptr);
+	glShaderSource(id,1,srcs,nullptr);
 	glCompileShader(id);
 
 	return id;
 
 }
 
-Gluint createProgram(std::vector<Gluint> const&shaders)
+GLuint createProgram(std::vector<GLuint> const&shaders)
 {
-	Gluint prg = glCreateProgram();
+	GLuint prg = glCreateProgram();
 
 	for(auto const&shader:shaders)
 		glAttachShader(prg,shader);
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 
 	//empty vertex array
 
-	Gluint vao;
+	GLuint vao;
 	glCreateVertexArrays(1,&vao);
 
 	
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 	).";
 
 
-	Gluint prg;
+	GLuint prg;
 	prg = createProgram({
 		createShader(GL_VERTEX_SHADER,vsSrc),
 		createShader(GL_FRAGMENT_SHADER,fsSrc)
