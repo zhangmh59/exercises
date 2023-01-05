@@ -1,7 +1,7 @@
 //#include <geGL/windows_OpenGLFunctionLoader.h>
 
 #include <iostream>
-
+#include <vector>
 #include <SDL.h>
 
 #include <geGL/geGL.h>
@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 	SDL_Init(SDL_INIT_EVERYTHING);//init. video
 
 	//create window
-	auto window = SDL_CreateWindow("SDL_Window",500,500,1000,500,SDL_WINDOW_OPENGL);
+	auto window = SDL_CreateWindow("SDL_Window",0,0,1000,500,SDL_WINDOW_OPENGL);
 
 	//create opengl context
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
 
 
 
-	//empty vertex array
+	//empty vertex array object
 
 	GLuint vao;
 	glCreateVertexArrays(1,&vao);
@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
 
 	std::string const vsSrc = R".(
 	
+	//GLSL
 	#version 460
 
 	void main()
@@ -76,6 +77,7 @@ int main(int argc, char* argv[])
 		if(gl_VertexID == 0)gl_Position = vec4(0,0,0,1);
 		if(gl_VertexID == 1)gl_Position = vec4(1,0,0,1);
 		if(gl_VertexID == 2)gl_Position = vec4(0,1,0,1);
+
 	}
 	
 
@@ -124,8 +126,11 @@ int main(int argc, char* argv[])
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glBindVertexArray(vao);
+
 		glUseProgram(prg);
+
 		glDrawArrays(GL_TRIANGLES,0,3);
+		//glDrawElements();
 
 		SDL_GL_SwapWindow(window);
 	}
@@ -133,9 +138,9 @@ int main(int argc, char* argv[])
 
 
 
-	SDL_GL_DeleteContext(context);
+	//SDL_GL_DeleteContext(context);
 
-	SDL_DestroyWindow(window);
+	//SDL_DestroyWindow(window);
 
 	return 0;
 }
