@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 	
 	#version 460
 
-	laylout(location = 0)out vec4 fcolor;
+	layout(location = 0)out vec4 fcolor;
 
 	void main()
 	{
