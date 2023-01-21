@@ -1,0 +1,271 @@
+//#include <geGL/windows_OpenGLFunctionLoader.h>
+
+#include <iostream>
+#include <vector>
+#include <SDL.h>
+
+#include <geGL/geGL.h>
+#include <geGL/StaticCalls.h>
+#include <cmath>
+
+#include <glm/glm.hpp>
+#include <glm/mat3x3.hpp>
+#include<glm/gtx/transform.hpp>
+
+using namespace ge::gl;
+
+GLuint createShader(GLenum type, std::string const&src)
+{
+	GLuint id = glCreateShader(type);
+	char const* const srcs[] = {
+		src.data()
+	};
+	glShaderSource(id,1,srcs,nullptr);
+	glCompileShader(id);
+
+	GLint status;
+	glGetShaderiv(id, GL_COMPILE_STATUS, &status);
+
+	if (status != GL_TRUE)
+	{
+		GLint len;
+		glGetShaderiv(id,GL_INFO_LOG_LENGTH,&len);
+
+		char* buffer = new char[len];
+		//auto message = std::string('',len);
+
+		glGetShaderInfoLog(id,len,nullptr,buffer);
+
+		auto msg = "shader compilation failed" + std::string(buffer);
+
+		delete[]buffer;
+
+		throw std::runtime_error(msg);
+	}
+
+	return id;
+
+}
+
+GLuint createProgram(std::vector<GLuint> const&shaders)
+{
+	GLuint prg = glCreateProgram();
+
+	for(auto const&shader:shaders)
+		glAttachShader(prg,shader);
+
+	glLinkProgram(prg);
+
+	GLint status;
+	glGetProgramiv(prg, GL_LINK_STATUS, &status);
+
+	if (status != GL_TRUE)
+	{
+		GLint len;
+		glGetProgramiv(prg, GL_INFO_LOG_LENGTH, &len);
+
+		char* buffer = new char[len];
+		//auto message = std::string('',len);
+
+		glGetProgramInfoLog(prg, len, nullptr, buffer);
+
+		auto msg = "program Linking failed"+std::string(buffer);
+
+		delete[]buffer;
+
+		throw std::runtime_error(msg);
+	}
+
+	return prg;
+}
+
+int main(int argc, char* argv[])
+{
+	//init. video
+	SDL_Init(SDL_INIT_EVERYTHING);
+
+	//create window
+	auto window = SDL_CreateWindow("SDL_Window",0,0,1000,500,SDL_WINDOW_OPENGL);
+
+	//create opengl context
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+
+	auto context = SDL_GL_CreateContext(window);
+
+	//SDL_DestroyWindow(SDL_Window * window);
+	
+	ge::gl::init();
+
+	//shader program
+	// 
+	
+
+
+
+
+	//empty vertex array object(empty vertex puller setting)
+
+
+	GLuint vbo;
+	glCreateBuffers(1, &vbo);
+
+	float const positionData[] =
+	{
+		0.0f, 0.0f,	1.0f,0.0f, 0.0f,
+		1.0f, 0.0f,	0.0f,1.0f, 0.0f,
+		0.0f, 1.0f,	0.0f,0.0f, 1.0f,
+	};
+
+	glNamedBufferData(vbo,sizeof(positionData), positionData,GL_DYNAMIC_COPY);
+	
+	
+
+
+	GLuint vao;
+	glCreateVertexArrays(1, &vao);
+
+	glEnableVertexArrayAttrib (vao,0);
+	glVertexArrayAttribFormat (vao,0,2,GL_FLOAT,GL_FALSE,0);
+	glVertexArrayVertexBuffer (vao,0,vbo,sizeof(float)*0,sizeof(float)*5);
+	glVertexArrayAttribBinding(vao,0,0);
+
+	glEnableVertexArrayAttrib (vao, 2);
+	glVertexArrayAttribFormat (vao, 2, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayVertexBuffer (vao, 2, vbo, sizeof(float) * 2, sizeof(float) * 5);
+	glVertexArrayAttribBinding(vao, 2, 2);
+
+	std::string const vsSrc = R".(
+	
+	//GLSL
+
+	#version 460
+	
+	layout(location = 0)in vec2 position;
+	layout(location = 2)in vec3 color;
+
+	out vec3 vColor;
+
+	uniform mat4 modelMatrix = mat4(1);
+
+	void main()
+	{
+      
+		vColor = color;
+		gl_Position =  modelMatrix * vec4(position,0,1);
+
+	}
+	
+
+	).";
+
+	std::string const fsSrc = R".(
+	
+	#version 460
+
+	//location specify the id of the buffer
+	layout(location = 0)out vec4 fColor;
+	
+	in vec3 vColor;
+
+	uniform float saturation = 0.5f;//饱和度
+
+	float intensity(vec3 color)
+	{
+		return (color.x + color.y +color.z)/3;
+
+	 }	
+
+	void main()
+	{
+		
+		vec3 finalColor = vColor*saturation + vec3(intensity(vColor))*(1-saturation);
+		
+		fColor = vec4(finalColor,0); //white
+		//fColor = vec4(1,1,1,1);
+	}
+	
+
+	).";
+
+
+	GLuint prg;
+	prg = createProgram({
+		createShader(GL_VERTEX_SHADER,vsSrc),
+		createShader(GL_FRAGMENT_SHADER,fsSrc)
+		});
+
+	//locations
+	GLuint saturationLocation =  glGetUniformLocation(prg,"saturation");
+	GLuint modelMatrixLocation = glGetUniformLocation(prg,"modelMatrix");
+
+	float saturation  =  0.5f;
+	float position[2] =  {0.f,0.f};
+	float scale[2]    =  {1.f,1.f};
+	float alpha       =  0.f;
+
+	bool running = true;
+	//main loop
+	while (running)
+	{
+		//event handling
+		SDL_Event event;
+
+		//event loop
+		while (SDL_PollEvent(&event))
+		{
+			if (event.type == SDL_QUIT)running = false;
+			if (event.type = SDL_KEYDOWN)
+			{
+				if (event.key.keysym.sym == SDLK_z)saturation += 0.1;
+				if (event.key.keysym.sym == SDLK_x)saturation -= 0.1;
+				glProgramUniform1f(prg, saturationLocation, saturation);
+					//std::cout << "saturation:" << saturation << std::endl;
+				
+				if (event.key.keysym.sym == SDLK_w)position[1] += 0.01;
+				if (event.key.keysym.sym == SDLK_s)position[1] -= 0.01;
+				if (event.key.keysym.sym == SDLK_a)position[0] -= 0.01;
+				if (event.key.keysym.sym == SDLK_d)position[0] += 0.01;
+
+				if (event.key.keysym.sym == SDLK_t)scale[1] += 0.01;
+				if (event.key.keysym.sym == SDLK_g)scale[1] -= 0.01;
+				if (event.key.keysym.sym == SDLK_f)scale[0] -= 0.01;
+				if (event.key.keysym.sym == SDLK_h)scale[0] += 0.01;
+
+				if (event.key.keysym.sym == SDLK_i)alpha += 0.003;
+				if (event.key.keysym.sym == SDLK_k)alpha -= 0.003;
+
+				glm::mat4 modelMatrix;
+				auto T = glm::translate(glm::mat4(1.f), glm::vec3(position[0], position[1], 0.f));
+				auto S = glm::scale   (glm::mat4(1.f), glm::vec3(scale   [0], scale   [1], 1.f));
+				auto R = glm::rotate    (glm::mat4(1.f), alpha,glm::vec3(0.f, 0.f, 1.f));
+				modelMatrix = T * R * S;
+				glProgramUniformMatrix4fv(prg, modelMatrixLocation,1,GL_FALSE,(float*)&modelMatrix);
+			}	
+				
+
+		}
+
+		#define GL_COLOR_BUFFER_BIT     0x00004000
+		glClearColor(0.1f, 0.1f, 0.1f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);//clear buffer
+
+		glBindVertexArray(vao);
+
+		glUseProgram(prg);
+
+		glDrawArrays(GL_TRIANGLES,0,3);
+		//glDrawElements();
+
+		SDL_GL_SwapWindow(window);
+	}
+
+
+
+
+	//SDL_GL_DeleteContext(context);
+
+	//SDL_DestroyWindow(window);
+
+	return 0;
+}

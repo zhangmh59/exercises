@@ -7,6 +7,8 @@
 #include <geGL/geGL.h>
 #include <geGL/StaticCalls.h>
 #include <cmath>
+#include <glm/glm.hpp>
+//#include <glm/mat3x3.hpp>
 
 using namespace ge::gl;
 
@@ -121,10 +123,27 @@ int main(int argc, char* argv[])
 
 	void main()
 	{
-		vColor = vec3(1,0,0);
-		if(gl_VertexID == 0){vColor = vec3(1,0,0);gl_Position = vec4( vec2(position) + vec2(			0,		  0)*scale  ,0,1);}
-		if(gl_VertexID == 1){vColor = vec3(0,1,0);gl_Position = vec4( vec2(position) + vec2(+cos(alpha),+sin(alpha))*scale  ,0,1);}
-		if(gl_VertexID == 2){vColor = vec3(0,0,1);gl_Position = vec4( vec2(position) + vec2(-sin(alpha),+cos(alpha))*scale  ,0,1);}
+        //vColor = vec3(1,0,0);
+		mat3 T = mat3(1);//unit matrix
+		mat3 R = mat3(1);//unit matrix
+		mat3 S = mat3(1);//unit matrix
+
+		T[2][0] = position.x;
+		T[2][1] = position.y;
+
+		R[0][0] =  cos(alpha) ;
+		R[1][0] = -sin(alpha);
+		R[0][1] =  sin(alpha) ;
+		R[1][1] =  cos(alpha);
+
+		S[0][0] = scale.x;
+		S[1][1] = scale.y;
+
+		mat3 M = T * R * S;
+
+		if(gl_VertexID == 0){vColor = vec3(1,0,0);gl_Position = vec4( M * vec3(0,0 ,1),1);}
+		if(gl_VertexID == 1){vColor = vec3(0,1,0);gl_Position = vec4( M * vec3(1,0 ,1),1);}
+		if(gl_VertexID == 2){vColor = vec3(0,0,1);gl_Position = vec4( M * vec3(0,1 ,1),1);}
 
 	}
 	
