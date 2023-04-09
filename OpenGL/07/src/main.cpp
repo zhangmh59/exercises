@@ -334,12 +334,12 @@ int main(int argc, char* argv[])
 				//std::cerr << "xrel:" << event.motion.xrel << std::endl;
 				//std::cerr << "yrel:" << event.motion.yrel << std::endl;
 
-				if (event.motion.state & SDL_BUTTON_LMASK )
+				if (event.motion.state == SDL_BUTTON_LMASK )
 				{
 					camXAngle += event.motion.xrel * 0.01f;
 					camYAngle += event.motion.yrel * 0.01f;
 				}
-				if (event.motion.state & SDL_BUTTON_RMASK)
+				if (event.motion.state == SDL_BUTTON_RMASK)
 				{
 					camDistance += event.motion.yrel * 0.1f;
 				}

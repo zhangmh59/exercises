@@ -1,3 +1,0 @@
-﻿  HelloWorld.cpp
-D:\Programming\exercises\c++\000_HelloWorld\000_HelloWorld\HelloWorld.cpp(17,11): warning C4101: “money”: 未引用的局部变量
-  000_HelloWorld.vcxproj -> D:\Programming\exercises\c++\000_HelloWorld\x64\Debug\000_HelloWorld.exe
